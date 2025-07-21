@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🩺 Disease Predictor App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .left-panel {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e3e8ff;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 45px 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 18px;
+        }
+
+        .symptoms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .symptom-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .symptom-item:hover {
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+
+        .symptom-item.selected {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .symptom-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: #4facfe;
+        }
+
+        .selected-count {
+            background: #4facfe;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-align: center;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .predict-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .predict-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 2px solid #e3e8ff;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 5px solid #4facfe;
+        }
+
+        .disease-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .confidence {
+            background: #4facfe;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .doctor-recommendation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .doctor-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #e1e5e9;
+            transition: all 0.3s ease;
+        }
+
+        .doctor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .urgency-high {
+            border-color: #ff6b6b;
+            background: #ffebee;
+        }
+
+        .urgency-medium {
+            border-color: #ffa726;
+            background: #fff8e1;
+        }
+
+        .urgency-low {
+            border-color: #4caf50;
+            background: #e8f5e8;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e3e8ff;
+        }
+
+        .sidebar h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666;
+        }
+
+        .emergency-box {
+            background: #ffebee;
+            border: 2px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: #fff8e1;
+            border: 2px solid #ffa726;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .symptoms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .doctor-recommendation {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🩺 AI Disease Predictor</h1>
+            <p>Enter symptoms to predict diseases and get doctor recommendations</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Symptom Selection -->
+            <div class="left-panel">
+                <h2>📋 Select Your Symptoms</h2>
+                
+                <!-- Search Box -->
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="🔍 Search symptoms..." id="searchInput">
+                    <span class="search-icon">🔍</span>
+                </div>
+
+                <!-- Selected Count -->
+                <div class="selected-count" id="selectedCount" style="display: none;">
+                    ✅ 0 symptoms selected
+                </div>
+
+                <!-- Symptoms Grid -->
+                <div class="symptoms-grid" id="symptomsGrid">
+                    <!-- Symptoms will be populated by JavaScript -->
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="predict-btn" id="predictBtn" disabled>🔬 Predict Disease</button>
+                <button class="clear-btn" id="clearBtn">🔄 Clear All</button>
+
+                <!-- Loading -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing symptoms...</p>
+                </div>
+
+                <!-- Results -->
+                <div class="results" id="results">
+                    <h2>📊 Prediction Results</h2>
+                    <div class="result-card">
+                        <div class="disease-name" id="diseaseName"></div>
+                        <div class="confidence" id="confidence"></div>
+                    </div>
+
+                    <h3>👨‍⚕️ Medical Recommendation</h3>
+                    <div class="doctor-recommendation" id="doctorRecommendation">
+                        <!-- Doctor cards will be populated -->
+                    </div>
+
+                    <div class="disclaimer">
+                        <h4>⚠️ Important Medical Disclaimer</h4>
+                        <p>This AI prediction tool is for informational purposes only and should not replace professional medical diagnosis. Always consult with qualified healthcare professionals for proper medical evaluation and treatment.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Sidebar -->
+            <div class="right-panel">
+                <div class="sidebar">
+                    <h3>🚨 Emergency Symptoms</h3>
+                    <div class="emergency-box">
+                        <ul>
+                            <li>• Chest pain or pressure</li>
+                            <li>• Difficulty breathing</li>
+                            <li>• Severe headache</li>
+                            <li>• Loss of consciousness</li>
+                            <li>• Severe bleeding</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h3>⚠️ When to See a Doctor</h3>
+                    <div class="warning-box">
+                        <ul>
+                            <li>• Persistent symptoms</li>
+                            <li>• Worsening condition</li>
+                            <li>• High fever (>101°F)</li>
+                            <li>• Unusual symptoms</li>
+                            <li>• Multiple symptoms</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h3>✅ General Health Tips</h3>
+                    <div class="success-box">
+                        <ul>
+                            <li>• Stay hydrated</li>
+                            <li>• Get adequate rest</li>
+                            <li>• Maintain good hygiene</li>
+                            <li>• Regular exercise</li>
+                            <li>• Balanced diet</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h3>📞 Emergency Contacts</h3>
+                    <div class="emergency-box">
+                        <p><strong>Emergency:</strong> 911</p>
+                        <p><strong>Poison Control:</strong> 1-800-222-1222</p>
+                        <p><strong>Crisis Hotline:</strong> 988</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample symptom list (you would load this from your pickle file)
+        const symptomList = [
+            "fever", "cough", "headache", "fatigue", "nausea", "vomiting", 
+            "chest_pain", "shortness_of_breath", "dizziness", "abdominal_pain",
+            "muscle_aches", "joint_pain", "sore_throat", "runny_nose", "sneezing",
+            "diarrhea", "constipation", "loss_of_appetite", "weight_loss", "sweating",
+            "chills", "skin_rash", "itching", "swelling", "back_pain", "neck_pain",
+            "difficulty_swallowing", "blurred_vision", "hearing_loss", "confusion",
+            "memory_loss", "anxiety", "depression", "insomnia", "excessive_thirst",
+            "frequent_urination", "bleeding", "bruising", "numbness", "tingling",
+            "weakness", "tremor", "seizures", "loss_of_consciousness", "palpitations"
+        ];
+
+        // Doctor recommendations database
+        const doctorRecommendations = {
+            "heart attack": {doctor: "Cardiologist", urgency: "🚨 Emergency", icon: "❤️", level: "high"},
+            "stroke": {doctor: "Neurologist", urgency: "🚨 Emergency", icon: "🧠", level: "high"},
+            "pneumonia": {doctor: "Pulmonologist", urgency: "🚨 High Priority", icon: "🫁", level: "high"},
+            "hepatitis": {doctor: "Gastroenterologist", urgency: "🚨 High Priority", icon: "🫃", level: "high"},
+            "migraine": {doctor: "Neurologist", urgency: "⚠️ Medium Priority", icon: "🧠", level: "medium"},
+            "diabetes": {doctor: "Endocrinologist", urgency: "⚠️ Medium Priority", icon: "🩸", level: "medium"},
+            "hypertension": {doctor: "Cardiologist", urgency: "⚠️ Medium Priority", icon: "❤️", level: "medium"},
+            "common_cold": {doctor: "General Physician", urgency: "✅ Low Priority", icon: "👨‍⚕️", level: "low"},
+            "flu": {doctor: "General Physician", urgency: "⚠️ Medium Priority", icon: "🦠", level: "medium"},
+            "gastritis": {doctor: "Gastroenterologist", urgency: "⚠️ Medium Priority", icon: "🫃", level: "medium"}
+        };
+
+        // Disease prediction database (simplified)
+        const diseaseDatabase = {
+            "fever,cough,headache": {disease: "flu", confidence: 85},
+            "chest_pain,shortness_of_breath": {disease: "heart attack", confidence: 92},
+            "headache,nausea,dizziness": {disease: "migraine", confidence: 78},
+            "fever,cough,chest_pain": {disease: "pneumonia", confidence: 88},
+            "abdominal_pain,nausea,vomiting": {disease: "gastritis", confidence: 82},
+            "excessive_thirst,frequent_urination,fatigue": {disease: "diabetes", confidence: 90},
+            "cough,runny_nose,sneezing": {disease: "common_cold", confidence: 75}
+        };
+
+        let selectedSymptoms = [];
+
+        // Initialize the app
+        function initApp() {
+            populateSymptoms();
+            setupEventListeners();
+        }
+
+        // Populate symptoms grid
+        function populateSymptoms() {
+            const grid = document.getElementById('symptomsGrid');
+            grid.innerHTML = '';
+
+            symptomList.forEach(symptom => {
+                const item = document.createElement('div');
+                item.className = 'symptom-item';
+                item.innerHTML = `
+                    <input type="checkbox" class="symptom-checkbox" value="${symptom}" id="${symptom}">
+                    <label for="${symptom}">${symptom.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</label>
+                `;
+                
+                item.addEventListener('click', function(e) {
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = item.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        handleSymptomChange(checkbox);
+                    } else {
+                        handleSymptomChange(e.target);
+                    }
+                });
+
+                grid.appendChild(item);
+            });
+        }
+
+        // Handle symptom selection
+        function handleSymptomChange(checkbox) {
+            const symptom = checkbox.value;
+            const item = checkbox.parentElement;
+
+            if (checkbox.checked) {
+                selectedSymptoms.push(symptom);
+                item.classList.add('selected');
+            } else {
+                selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+                item.classList.remove('selected');
+            }
+
+            updateSelectedCount();
+            updatePredictButton();
+        }
+
+        // Update selected count
+        function updateSelectedCount() {
+            const countElement = document.getElementById('selectedCount');
+            if (selectedSymptoms.length > 0) {
+                countElement.style.display = 'block';
+                countElement.textContent = `✅ ${selectedSymptoms.length} symptom${selectedSymptoms.length > 1 ? 's' : ''} selected`;
+            } else {
+                countElement.style.display = 'none';
+            }
+        }
+
+        // Update predict button state
+        function updatePredictButton() {
+            const predictBtn = document.getElementById('predictBtn');
+            predictBtn.disabled = selectedSymptoms.length === 0;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const symptoms = document.querySelectorAll('.symptom-item');
+                
+                symptoms.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            // Predict button
+            document.getElementById('predictBtn').addEventListener('click', predictDisease);
+
+            // Clear button
+            document.getElementById('clearBtn').addEventListener('click', clearAll);
+        }
+
+        // Predict disease
+        function predictDisease() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            loading.classList.add('show');
+            results.classList.remove('show');
+
+            setTimeout(() => {
+                loading.classList.remove('show');
+                
+                // Simple prediction logic (in real app, this would call your ML model)
+                const prediction = findBestMatch();
+                displayResults(prediction);
+                
+                results.classList.add('show');
+            }, 2000);
+        }
+
+        // Find best disease match
+        function findBestMatch() {
+            let bestMatch = null;
+            let highestScore = 0;
+
+            // Simple matching algorithm
+            for (const [symptoms, prediction] of Object.entries(diseaseDatabase)) {
+                const symptomsArray = symptoms.split(',');
+                let score = 0;
+
+                symptomsArray.forEach(symptom => {
+                    if (selectedSymptoms.includes(symptom)) {
+                        score += 1;
+                    }
+                });
+
+                const matchPercentage = (score / symptomsArray.length) * prediction.confidence / 100;
+                
+                if (matchPercentage > highestScore) {
+                    highestScore = matchPercentage;
+                    bestMatch = {
+                        disease: prediction.disease,
+                        confidence: Math.min(95, Math.round(matchPercentage * 100))
+                    };
+                }
+            }
+
+            // Default prediction if no good match
+            if (!bestMatch || bestMatch.confidence < 30) {
+                bestMatch = {
+                    disease: "common_cold",
+                    confidence: 60
+                };
+            }
+
+            return bestMatch;
+        }
+
+        // Display results
+        function displayResults(prediction) {
+            // Display disease name
+            const diseaseElement = document.getElementById('diseaseName');
+            const diseaseName = prediction.disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            diseaseElement.textContent = `🎯 ${diseaseName}`;
+
+            // Display confidence
+            const confidenceElement = document.getElementById('confidence');
+            confidenceElement.textContent = `${prediction.confidence}% Confidence`;
+
+            // Display doctor recommendation
+            const recommendation = doctorRecommendations[prediction.disease] || 
+                                 {doctor: "General Physician", urgency: "⚠️ Medium Priority", icon: "👨‍⚕️", level: "medium"};
+            
+            const doctorElement = document.getElementById('doctorRecommendation');
+            doctorElement.innerHTML = `
+                <div class="doctor-card urgency-${recommendation.level}">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">${recommendation.icon}</div>
+                    <h4>Recommended Specialist</h4>
+                    <p><strong>${recommendation.doctor}</strong></p>
+                </div>
+                <div class="doctor-card urgency-${recommendation.level}">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">⚡</div>
+                    <h4>Urgency Level</h4>
+                    <p><strong>${recommendation.urgency}</strong></p>
+                </div>
+                <div class="doctor-card urgency-${recommendation.level}">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📞</div>
+                    <h4>Next Steps</h4>
+                    <p><strong>${getNextSteps(recommendation.level)}</strong></p>
+                </div>
+            `;
+        }
+
+        // Get next steps based on urgency
+        function getNextSteps(level) {
+            switch(level) {
+                case 'high':
+                    return 'Seek immediate medical attention!';
+                case 'medium':
+                    return 'Schedule an appointment soon';
+                case 'low':
+                default:
+                    return 'Monitor symptoms closely';
+            }
+        }
+
+        // Clear all selections
+        function clearAll() {
+            selectedSymptoms = [];
+            const checkboxes = document.querySelectorAll('.symptom-checkbox');
+            const items = document.querySelectorAll('.symptom-item');
+            
+            checkboxes.forEach(cb => cb.checked = false);
+            items.forEach(item => item.classList.remove('selected'));
+            
+            document.getElementById('searchInput').value = '';
+            document.getElementById('results').classList.remove('show');
+            
+            updateSelectedCount();
+            updatePredictButton();
+            
+            // Reset search filter
+            items.forEach(item => item.style.display = 'flex');
+        }
+
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
